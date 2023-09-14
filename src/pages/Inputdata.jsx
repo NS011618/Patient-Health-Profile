@@ -1,88 +1,101 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate from react-router-dom
 import Papa from 'papaparse';
-import { inputRoute } from '../utils/APIRoutes'; // Make sure to import your API route correctly
 
-const CsvDataDisplay = () => {
-  const navigate = useNavigate(); // Initialize useNavigate
-  const [csvData, setCsvData] = useState([]);
-  const [postDataResponse, setPostDataResponse] = useState(null);
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+} from 'recharts';
+import { styled } from 'styled-components';
 
-  const handleFileUpload = (event) => {
-    const file = event.target.files[0];
+const Inputdata = () => {
+  const [data, setData] = useState([]);
+  const [fileNames, setFileNames] = useState([]);
 
-    Papa.parse(file, {
-      header: true,
-      dynamicTyping: true,
-      skipEmptyLines: true,
-      complete: (result) => {
-        const nonEmptyRows = result.data.filter((row) => {
-          // Customize this condition based on your CSV data structure
-          return Object.values(row).some((value) => value !== null && value !== undefined && value !== '');
-        });
-        setCsvData(nonEmptyRows);
-      },
-    });
-  };
+  const handleFileUpload = (e) => {
+    const files = e.target.files;
 
-  const postDataToPublicURL = async () => {
-    if (csvData.length === 0) {
-      setPostDataResponse('No data to post');
-      return;
-    }
+    // Loop through selected files and parse each one
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
 
-    try {
-      const response = await fetch(inputRoute, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      // Update the fileNames array with the name of the current file
+      setFileNames((prevFileNames) => [...prevFileNames, file.name]);
+
+      Papa.parse(file, {
+        header: true,
+        complete: (results) => {
+          // Append the data from the current file to the existing data
+          setData((prevData) => [...prevData, ...results.data]);
         },
-        body: JSON.stringify(csvData),
       });
-
-      if (response.ok) {
-        setPostDataResponse('Data posted successfully');
-
-        // Redirect to the patient dashboard after successful data posting
-        navigate('/patient-dashboard'); // Replace with your actual dashboard route
-      } else {
-        setPostDataResponse('Failed to post data');
-      }
-    } catch (error) {
-      console.error('Error posting data:', error);
-      setPostDataResponse('An error occurred while posting data');
     }
   };
 
   return (
-    <div>
-      <h1>CSV Data Display and Post</h1>
-      <input type="file" accept=".csv" onChange={handleFileUpload} />
-      {csvData.length > 0 && (
+    <>
+      <input type="file" accept=".csv" multiple onChange={handleFileUpload} />
+      {fileNames.length > 0 && (
         <div>
-          <h2>CSV Data:</h2>
+          <h2>Selected Files:</h2>
           <ul>
-            {csvData.map((row, index) => (
-              <li key={index}>
-                {Object.entries(row).map(([key, value]) => {
-                  if (value !== null && value !== undefined && value !== '') {
-                    return (
-                      <div key={key}>
-                        <strong>{key}:</strong> {value}
-                      </div>
-                    );
-                  }
-                  return null; // Skip printing empty values
-                })}
-              </li>
+            {fileNames.map((fileName, index) => (
+              <li key={index}>{fileName}</li>
             ))}
           </ul>
-          <button onClick={postDataToPublicURL}>Post Data</button>
-          {postDataResponse && <p>{postDataResponse}</p>}
         </div>
       )}
-    </div>
+      <FormContainer>
+        <br />
+        {data.length ? (
+          <table>
+            {/* ...Your table code */}
+          </table>
+        ) : null}
+        <div className="flex flex-col md:flex-row items-center justify-center mt-8 md:space-x-6">
+          <div className="bg-white p-6 rounded-lg shadow-md w-full md:w-1/2 mt-4 md:mt-0">
+            {/* ...Your first bar chart */}
+          </div>
+          <div className="bg-white p-6 rounded-lg shadow-md w-full md:w-1/2 mt-4 md:mt-0">
+            {/* ...Your second bar chart */}
+          </div>
+        </div>
+      </FormContainer>
+    </>
   );
 };
 
-export default CsvDataDisplay;
+
+const FormContainer = styled.div`
+    .container {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    table {
+        border-collapse: collapse;
+        border-spacing: 0;
+        width: 100%;
+        border: 1px solid #ddd;
+    }
+    th,
+    td {
+        text-align: left;
+        padding: 16px;
+        border: 1px solid #ddd;
+    }
+    thead,tr:nth-child(even) {
+        background-color: #f2f2f2;
+    } 
+    
+  
+
+`;
+
+export default Inputdata
