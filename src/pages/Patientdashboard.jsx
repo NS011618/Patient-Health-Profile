@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,useRef  } from 'react';
 import { getRoute } from '../utils/APIRoutes';
 import axios from 'axios';
+import Chart from 'chart.js/auto';
 
 const Patientdashboard = () => {
   const [records, setRecords] = useState([]);
@@ -9,6 +10,57 @@ const Patientdashboard = () => {
   const [summarized, setSummarized] = useState(""); // State to hold summarized text
   const [summarizedPoints, setSummarizedPoints] = useState([]); // State to hold summarized points
   const [error, setError] = useState(null);
+  {/*const chartRef = useRef(null);
+
+  useEffect(() => {
+    if (selectedRecord) {
+      if (chartRef.current) {
+        // Destroy the previous chart instance if it exists
+        chartRef.current.destroy();
+      }
+
+      const ctx = document.getElementById('myChart').getContext('2d');
+      const data = generateChartData();
+
+      chartRef.current = new Chart(ctx, {
+        type: 'bar', // Use 'bar' for a bar chart
+        data: {
+          labels: data.map((item) => item.x),
+          datasets: [
+            {
+              label: 'Visits',
+              data: data.map((item) => item.y),
+              backgroundColor: 'rgba(70, 191, 189, 0.5)',
+            },
+          ],
+        },
+        options: {
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Dates',
+              },
+            },
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Visits',
+              },
+            },
+          },
+        },
+      });
+    }
+  }, [selectedRecord, records]);
+
+  const generateChartData = () => {
+    return records.map((record) => ({
+      x: record.Dates,
+      y: record.Visits,
+    }));
+  };*/}
 
   useEffect(() => {
     fetch(getRoute)
@@ -17,13 +69,16 @@ const Patientdashboard = () => {
       .catch((error) => console.error('Error fetching data:', error));
   }, []);
 
+  // Define the order of fields and exclude "Sno"
+  const fieldOrder = ["Name", "Age", "Sex", "Dates", "Description", "Medical_specialty", "Sample_name", "Transcription", "Keywords"];
+
   const handleNameClick = (record) => {
     setSelectedRecord(record);
     setExpanded(true);
     setSummarized(""); // Clear any previous summarized text
     setSummarizedPoints([]); // Clear any previous summarized points
   };
-
+  
   const handleSummarize = async (record) => {
     const summary = record.Transcription;
 
@@ -86,11 +141,14 @@ const Patientdashboard = () => {
                 <h1 className="text-2xl font-semibold mb-4">Selected Record</h1>
                 <table className="w-full border-collapse">
                   <tbody>
-                    {Object.entries(selectedRecord).map(([key, value], index) => (
-                      <tr key={index}>
-                        <th className="py-2 px-4 border border-gray-300">{key}</th>
-                        <td className="py-2 px-4 border border-gray-300">{value}</td>
-                      </tr>
+                    {fieldOrder.map((field, index) => (
+                      // Check if the field exists in the selected record before rendering
+                      selectedRecord.hasOwnProperty(field) && (
+                        <tr key={index}>
+                          <th className="py-2 px-4 border border-gray-300">{field}</th>
+                          <td className="py-2 px-4 border border-gray-300">{selectedRecord[field]}</td>
+                        </tr>
+                      )
                     ))}
                   </tbody>
                 </table>
@@ -115,6 +173,9 @@ const Patientdashboard = () => {
             )}
           </div>
         </div>
+        {/*
+        <canvas id="myChart" width="200" height="200"></canvas>
+                        */}
       </div>
     </div>
   );
