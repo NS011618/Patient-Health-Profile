@@ -29,8 +29,15 @@ const CsvDataDisplay = () => {
       Papa.parse(file, {
         header: true,
         complete: (results) => {
+          // Filter out rows with empty values
+          const nonEmptyRows = results.data.filter((row) =>
+            Object.values(row).some(
+              (value) => value !== null && value !== undefined && value !== ''
+            )
+          );
+
           // Append the data from the current file to the existing data
-          setCsvData((prevData) => [...prevData, ...results.data]);
+          setCsvData((prevData) => [...prevData, ...nonEmptyRows]);
         },
       });
     });
@@ -101,9 +108,13 @@ const CsvDataDisplay = () => {
         </div>
       )}
 
-      
-      <button onClick={postDataToPublicURL}>Post Data</button>
-      {postDataResponse && <p>{postDataResponse}</p>}
+      {csvData.length > 0 && (
+        <>
+          <button onClick={postDataToPublicURL}>Post Data</button>
+          {postDataResponse && <p>{postDataResponse}</p>}
+        </>
+      )}
+
     </div>
   );
 };
