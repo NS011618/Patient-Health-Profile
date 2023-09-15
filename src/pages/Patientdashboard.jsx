@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,useRef  } from 'react';
 import { getRoute } from '../utils/APIRoutes';
 import axios from 'axios';
-
+import Chart from 'chart.js/auto';
 
 const Patientdashboard = () => {
   const [records, setRecords] = useState([]);
@@ -10,7 +10,57 @@ const Patientdashboard = () => {
   const [summarized, setSummarized] = useState(""); // State to hold summarized text
   const [summarizedPoints, setSummarizedPoints] = useState([]); // State to hold summarized points
   const [error, setError] = useState(null);
-  
+  {/*const chartRef = useRef(null);
+
+  useEffect(() => {
+    if (selectedRecord) {
+      if (chartRef.current) {
+        // Destroy the previous chart instance if it exists
+        chartRef.current.destroy();
+      }
+
+      const ctx = document.getElementById('myChart').getContext('2d');
+      const data = generateChartData();
+
+      chartRef.current = new Chart(ctx, {
+        type: 'bar', // Use 'bar' for a bar chart
+        data: {
+          labels: data.map((item) => item.x),
+          datasets: [
+            {
+              label: 'Visits',
+              data: data.map((item) => item.y),
+              backgroundColor: 'rgba(70, 191, 189, 0.5)',
+            },
+          ],
+        },
+        options: {
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Dates',
+              },
+            },
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Visits',
+              },
+            },
+          },
+        },
+      });
+    }
+  }, [selectedRecord, records]);
+
+  const generateChartData = () => {
+    return records.map((record) => ({
+      x: record.Dates,
+      y: record.Visits,
+    }));
+  };*/}
 
   useEffect(() => {
     fetch(getRoute)
@@ -28,14 +78,15 @@ const Patientdashboard = () => {
     setSummarized(""); // Clear any previous summarized text
     setSummarizedPoints([]); // Clear any previous summarized points
   };
+  
   const handleSummarize = async (record) => {
     const summary = record.Transcription;
-    console.log(summary);
+
     try {
       const data = {
         text: summary
       };
-  
+
       const requestOptions = {
         method: 'POST',
         headers: {
@@ -43,19 +94,19 @@ const Patientdashboard = () => {
         },
         body: JSON.stringify(data),
       };
-  
+
       const response = await fetch('http://127.0.0.1:9000/summarize', requestOptions);
-  
+
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
-  
+
       const responseData = await response.json();
-      console.log(responseData.sucess);
-  
-      // Check if the success property exists and is not null before splitting
-      const points = responseData.sucess ? responseData.sucess.split('\n') : [];
-  
+      
+
+      // Split the summarized text into an array of points (assuming it's separated by '\n')
+      const points = responseData.sucess.split('\n');
+
       setSummarizedPoints(points);
       setError(null); // Clear any previous errors
     } catch (error) {
@@ -63,7 +114,6 @@ const Patientdashboard = () => {
       console.error('Fetch Error:', error);
     }
   };
-  
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -124,7 +174,9 @@ const Patientdashboard = () => {
             )}
           </div>
         </div>
-       
+        {/*
+        <canvas id="myChart" width="200" height="200"></canvas>
+                        */}
       </div>
     </div>
   );
