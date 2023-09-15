@@ -83,6 +83,78 @@ def receive_and_save_data():
     except Exception as e:
         return jsonify({'message': f'Error: {str(e)}'}), 500
 
+import torch
+from transformers import BertTokenizer, BertForMaskedLM
+
+# Load ClinicalBERT model and tokenizer
+
+
+# Define a function to generate medical case presentations
+def generate_medical_case_presentation(info_dict, max_length=512):
+    structured_info = ""
+    for section, content in info_dict.items():
+        structured_info += f"{section}:\n{content}\n"
+
+    input_text = structured_info
+
+
+    model_name = "emilyalsentzer/Bio_ClinicalBERT"
+    tokenizer = BertTokenizer.from_pretrained(model_name)
+    model = BertForMaskedLM.from_pretrained(model_name)
+
+    # Tokenize the input text
+    input_ids = tokenizer.encode(input_text, return_tensors="pt", truncation=True)
+
+    # Split input text into smaller segments if it exceeds max_length
+    if len(input_ids[0]) > max_length:
+        segments = []
+        current_segment = []
+        for token_id in input_ids[0]:
+            current_segment.append(token_id)
+            if len(current_segment) >= max_length - 2:  # Account for [CLS] and [SEP] tokens
+                segments.append(current_segment)
+                current_segment = [input_ids[0][0]]  # Start a new segment with [CLS] token
+
+        # Generate text for each segment
+        generated_text = ""
+        for segment in segments:
+            with torch.no_grad():
+                output = model.generate(torch.tensor(segment).unsqueeze(0), max_length=200, num_return_sequences=1, no_repeat_ngram_size=2)
+
+            generated_text += tokenizer.decode(output[0], skip_special_tokens=True)
+
+        return generated_text
+
+    # If the input fits within the max_length, generate text directly
+    with torch.no_grad():
+        output = model.generate(input_ids, max_length=200, num_return_sequences=1, no_repeat_ngram_size=2)
+
+    generated_text = tokenizer.decode(output[0], skip_special_tokens=True)
+
+    return generated_text
+
+def generate_summerization_clinical_bert(info_dict):
+  res = generate_medical_case_presentation(info_dict)
+  return res
+
+@app.route('/summary', methods=['POST'])
+def summarize():
+
+    try:
+        # Get the JSON data from the POST request
+        request_data = request.json
+        # Extract the "text" value from the JSON data
+        text_data = request_data.get('text', '')
+        print(text_data)
+        res = generate_summerization_clinical_bert(text_data)
+        print(res)
+        # Perform summarization or any other processing on the text_data here
+        # For this example, let's just return the extracted text as a response
+        return jsonify({'result': res}), 200
+
+    except Exception as e:
+        return jsonify({'error': 'Invalid JSON format'}), 400
+
 @app.route("/getdata", methods=["GET"])
 def get_medical_records():
     records = list(collection.find({}, {"_id": 0}))
