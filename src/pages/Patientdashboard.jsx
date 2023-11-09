@@ -95,7 +95,7 @@ const Patientdashboard = () => {
         body: JSON.stringify(data),
       };
 
-      const response = await fetch('http://127.0.0.1:9000/summarize', requestOptions);
+      const response = await fetch('http://127.0.0.1:8000/summarize', requestOptions);
 
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
